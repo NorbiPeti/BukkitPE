@@ -8,10 +8,6 @@ import net.BukkitPE.math.Vector3;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
-
- * BukkitPE Project
- */
 public class EntityMetadata {
 
     private final Map<Integer, EntityData> map = new HashMap<>();
@@ -53,7 +49,7 @@ public class EntityMetadata {
     }
 
     public long getLong(int id) {
-        return (long) this.getOrDefault(id, new IntEntityData(id, 0)).getData();
+        return (Long) this.getOrDefault(id, new LongEntityData(id, 0)).getData();
     }
 
     public float getFloat(int id) {

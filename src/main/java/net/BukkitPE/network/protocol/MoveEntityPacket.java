@@ -34,7 +34,7 @@ public class MoveEntityPacket extends DataPacket {
     @Override
     public void encode() {
         this.reset();
-        this.putLong(this.eid);
+        this.putEntityId(this.eid);
         this.putFloat((float) this.x);
         this.putFloat((float) this.y);
         this.putFloat((float) this.z);

@@ -1,20 +1,32 @@
 package net.BukkitPE.command;
 
+import net.BukkitPE.Player;
 import net.BukkitPE.Server;
+import net.BukkitPE.command.data.CommandData;
+import net.BukkitPE.command.data.CommandOverload;
+import net.BukkitPE.command.data.CommandParameter;
 import net.BukkitPE.lang.TextContainer;
 import net.BukkitPE.lang.TranslationContainer;
 import net.BukkitPE.permission.Permissible;
+import net.BukkitPE.permission.Permission;
 import net.BukkitPE.timings.Timing;
 import net.BukkitPE.timings.Timings;
 import net.BukkitPE.utils.TextFormat;
+import com.google.gson.Gson;
+import com.google.gson.stream.JsonReader;
 
+import java.io.FileReader;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
-/**
-
- * BukkitPE Project
- */
 public abstract class Command {
+
+    private static CommandData defaultDataTemplate = null;
+
+    protected CommandData commandData;
 
     private final String name;
 
@@ -51,6 +63,7 @@ public abstract class Command {
     }
 
     public Command(String name, String description, String usageMessage, String[] aliases) {
+        this.commandData = new CommandData();
         this.name = name;
         this.nextLabel = name;
         this.label = name;
@@ -59,6 +72,40 @@ public abstract class Command {
         this.aliases = aliases;
         this.activeAliases = aliases;
         this.timing = Timings.getCommandTiming(this);
+    }
+
+    /**
+     * Returns an CommandData containing command data
+     *
+     * @return CommandData
+     */
+    public CommandData getDefaultCommandData() {
+        return this.commandData;
+    }
+
+    /**
+     * Generates modified command data for the specified player
+     * for AvailableCommandsPacket.
+     *
+     * @return CommandData|null
+     */
+    public CommandData generateCustomCommandData(Player player){
+        if(!this.testPermission(player)){
+            return null;
+        }
+        CommandData customData = this.commandData.clone();
+        customData.aliases = this.getAliases();
+        customData.description = player.getServer().getLanguage().translateString(this.getDescription());
+        customData.permission = player.hasPermission(this.getPermission()) ? "any" : "false";
+        CommandOverload overload = new CommandOverload();
+        overload.input.parameters.add(new CommandParameter("test", "rawtext", false));
+        customData.overloads.put("default", overload);
+
+        return customData;
+    }
+
+    public Map<String, CommandOverload> getOverloads(){
+        return this.commandData.overloads;
     }
 
     public abstract boolean execute(CommandSender sender, String commandLabel, String[] args);
@@ -179,6 +226,13 @@ public abstract class Command {
         this.usageMessage = usageMessage;
     }
 
+    public static final CommandData generateDefaultData() {
+        if(defaultDataTemplate == null){
+            //defaultDataTemplate = new Gson().fromJson(new InputStreamReader(Server.class.getClassLoader().getResourceAsStream("command_default.json")));
+        }
+        return defaultDataTemplate.clone();
+    }
+
     public static void broadcastCommandMessage(CommandSender source, String message) {
         broadcastCommandMessage(source, message, true);
     }
@@ -188,7 +242,7 @@ public abstract class Command {
 
         TranslationContainer result = new TranslationContainer("chat.type.admin", new String[]{source.getName(), message});
 
-        TranslationContainer colored = new TranslationContainer(TextFormat.GRAY + TextFormat.ITALIC + "%chat.type.admin", new String[]{source.getName(), message});
+        TranslationContainer colored = new TranslationContainer(TextFormat.GRAY + "" + TextFormat.ITALIC + "%chat.type.admin", new String[]{source.getName(), message});
 
         if (sendToSource && !(source instanceof ConsoleCommandSender)) {
             source.sendMessage(message);
@@ -215,7 +269,7 @@ public abstract class Command {
 
         Set<Permissible> users = source.getServer().getPluginManager().getPermissionSubscriptions(Server.BROADCAST_CHANNEL_ADMINISTRATIVE);
 
-        String coloredStr = TextFormat.GRAY + TextFormat.ITALIC + resultStr;
+        String coloredStr = TextFormat.GRAY + "" + TextFormat.ITALIC + resultStr;
 
         m.setText(resultStr);
         TextContainer result = m.clone();
