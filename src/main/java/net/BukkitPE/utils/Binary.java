@@ -2,7 +2,6 @@ package net.BukkitPE.utils;
 
 import net.BukkitPE.entity.Entity;
 import net.BukkitPE.entity.data.*;
-import com.sun.javaws.exceptions.InvalidArgumentException;
 
 import java.io.*;
 import java.nio.ByteBuffer;
