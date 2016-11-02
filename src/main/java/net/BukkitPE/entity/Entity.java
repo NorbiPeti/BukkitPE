@@ -28,6 +28,7 @@ import net.BukkitPE.nbt.tag.ListTag;
 import net.BukkitPE.network.protocol.MobEffectPacket;
 import net.BukkitPE.network.protocol.RemoveEntityPacket;
 import net.BukkitPE.network.protocol.SetEntityDataPacket;
+import net.BukkitPE.network.protocol.SetEntityMotionPacket;
 import net.BukkitPE.plugin.Plugin;
 import net.BukkitPE.potion.Effect;
 import net.BukkitPE.timings.Timing;
@@ -38,6 +39,7 @@ import net.BukkitPE.utils.ChunkException;
 import java.lang.reflect.Constructor;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+
 
 public abstract class Entity extends Location implements Metadatable {
 
@@ -975,7 +977,14 @@ public abstract class Entity extends Location implements Metadatable {
     }
 
     public void addMotion(double motionX, double motionY, double motionZ) {
-        this.level.addEntityMotion(this.chunk.getX(), this.chunk.getZ(), this.id, motionX, motionY, motionZ);
+        int chunkX = this.getFloorX() >> 16;
+        int chunkZ = this.getFloorZ() >> 16;
+        SetEntityMotionPacket pk = new SetEntityMotionPacket();
+        pk.eid = this.getId();
+        pk.motionX = (float) motionX;
+        pk.motionY = (float) motionY;
+        pk.motionZ = (float) motionZ;
+        this.level.addChunkPacket(chunkX, chunkZ, pk);
     }
 
     public Vector3 getDirectionVector() {
