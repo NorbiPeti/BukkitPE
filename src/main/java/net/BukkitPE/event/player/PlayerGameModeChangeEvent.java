@@ -1,5 +1,6 @@
 package net.BukkitPE.event.player;
 
+import net.BukkitPE.AdventureSettings;
 import net.BukkitPE.Player;
 import net.BukkitPE.event.Cancellable;
 import net.BukkitPE.event.HandlerList;
@@ -13,12 +14,23 @@ public class PlayerGameModeChangeEvent extends PlayerEvent implements Cancellabl
 
     protected final int gamemode;
 
-    public PlayerGameModeChangeEvent(Player player, int newGameMode) {
+    protected AdventureSettings newAdventureSettings;
+
+    public PlayerGameModeChangeEvent(Player player, int newGameMode, AdventureSettings newAdventureSettings) {
         this.player = player;
         this.gamemode = newGameMode;
+        this.newAdventureSettings = newAdventureSettings;
     }
 
     public int getNewGamemode() {
         return gamemode;
+    }
+
+    public AdventureSettings getNewAdventureSettings() {
+        return newAdventureSettings;
+    }
+
+    public void setNewAdventureSettings(AdventureSettings newAdventureSettings) {
+        this.newAdventureSettings = newAdventureSettings;
     }
 }

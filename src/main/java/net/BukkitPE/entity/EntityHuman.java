@@ -17,7 +17,7 @@ public class EntityHuman extends EntityHumanType {
     public static final int DATA_PLAYER_FLAG_SLEEP = 1; //TODO: CHECK
     public static final int DATA_PLAYER_FLAG_DEAD = 2; //TODO: CHECK
 
-    public static final int DATA_PLAYER_FLAGS = 16; //TODO: CHECK
+    public static final int DATA_PLAYER_FLAGS = 27;
     public static final int DATA_PLAYER_BED_POSITION = 17;
     public static final int DATA_PLAYER_BUTTON_TEXT = 40;
 
@@ -126,14 +126,13 @@ public class EntityHuman extends EntityHumanType {
                 throw new IllegalStateException(this.getClass().getSimpleName() + " must have a valid skin set");
             }
 
-            if (!(this instanceof Player)) {
-                this.server.updatePlayerListData(this.getUniqueId(), this.getId(), this.getName(), this.skin, new Player[]{player});
-            }
+            this.server.updatePlayerListData(this.getUniqueId(), this.getId(), this.getName(), this.skin, new Player[]{player});
 
             AddPlayerPacket pk = new AddPlayerPacket();
             pk.uuid = this.getUniqueId();
             pk.username = this.getName();
-            pk.eid = this.getId();
+            pk.entityUniqueId = this.getId();
+            pk.entityRuntimeId = this.getId();
             pk.x = (float) this.x;
             pk.y = (float) this.y;
             pk.z = (float) this.z;
