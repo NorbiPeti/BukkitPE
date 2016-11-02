@@ -14,16 +14,14 @@ import net.BukkitPE.network.protocol.EntityEventPacket;
 import net.BukkitPE.potion.Effect;
 import net.BukkitPE.timings.Timings;
 import net.BukkitPE.utils.BlockIterator;
+import net.BukkitPE.Player;
 
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
-
- * BukkitPE Project
- */
 public abstract class EntityLiving extends Entity implements EntityDamageable {
     public EntityLiving(FullChunk chunk, CompoundTag nbt) {
         super(chunk, nbt);
@@ -115,7 +113,7 @@ public abstract class EntityLiving extends Entity implements EntityDamageable {
                 e = ((EntityDamageByChildEntityEvent) source).getChild();
             }
 
-            if (e.isOnFire()) {
+            if (e.isOnFire() && !(e instanceof Player)) {
                 this.setOnFire(2 * this.server.getDifficulty());
             }
 
@@ -181,6 +179,8 @@ public abstract class EntityLiving extends Entity implements EntityDamageable {
     @Override
     public boolean entityBaseTick(int tickDiff) {
         Timings.livingEntityBaseTickTimer.startTiming();
+        this.setDataFlag(DATA_FLAGS, DATA_FLAG_NOT_UNDERWATER, !this.isInsideOfWater());
+
         boolean hasUpdate = super.entityBaseTick(tickDiff);
 
         if (this.isAlive()) {
@@ -192,7 +192,7 @@ public abstract class EntityLiving extends Entity implements EntityDamageable {
 
             if (!this.hasEffect(Effect.WATER_BREATHING) && this.isInsideOfWater()) {
                 if (this instanceof EntityWaterAnimal) {
-                    this.setDataProperty(new ShortEntityData(DATA_AIR, 300));
+                    this.setDataProperty(new ShortEntityData(DATA_AIR, 400));
                 } else {
                     hasUpdate = true;
                     int airTicks = this.getDataPropertyShort(DATA_AIR) - tickDiff;
@@ -218,7 +218,7 @@ public abstract class EntityLiving extends Entity implements EntityDamageable {
 
                     this.setDataProperty(new ShortEntityData(DATA_AIR, airTicks));
                 } else {
-                    this.setDataProperty(new ShortEntityData(DATA_AIR, 300));
+                    this.setDataProperty(new ShortEntityData(DATA_AIR, 400));
                 }
             }
         }
@@ -240,15 +240,20 @@ public abstract class EntityLiving extends Entity implements EntityDamageable {
     }
 
     public Block[] getLineOfSight(int maxDistance, int maxLength) {
-        return this.getLineOfSight(maxDistance, maxLength, new HashMap<>());
+        return this.getLineOfSight(maxDistance, maxLength, new Integer[]{});
     }
 
+    @Deprecated
     public Block[] getLineOfSight(int maxDistance, int maxLength, Map<Integer, Object> transparent) {
+        return this.getLineOfSight(maxDistance, maxLength, transparent.keySet().stream().toArray(Integer[]::new));
+    }
+
+    public Block[] getLineOfSight(int maxDistance, int maxLength, Integer[] transparent) {
         if (maxDistance > 120) {
             maxDistance = 120;
         }
 
-        if (transparent != null && transparent.isEmpty()) {
+        if (transparent != null && transparent.length == 0) {
             transparent = null;
         }
 
@@ -271,7 +276,7 @@ public abstract class EntityLiving extends Entity implements EntityDamageable {
                     break;
                 }
             } else {
-                if (!transparent.containsKey(id)) {
+                if (Arrays.binarySearch(transparent, id) < 0) {
                     break;
                 }
             }
@@ -281,15 +286,26 @@ public abstract class EntityLiving extends Entity implements EntityDamageable {
     }
 
     public Block getTargetBlock(int maxDistance) {
-        return getTargetBlock(maxDistance, new HashMap<>());
+        return getTargetBlock(maxDistance, new Integer[]{});
     }
 
+    @Deprecated
     public Block getTargetBlock(int maxDistance, Map<Integer, Object> transparent) {
+        return getTargetBlock(maxDistance, transparent.keySet().stream().toArray(Integer[]::new));
+    }
+
+    public Block getTargetBlock(int maxDistance, Integer[] transparent) {
         try {
             Block[] blocks = this.getLineOfSight(maxDistance, 1, transparent);
             Block block = blocks[0];
-            if (block instanceof Block) {
-                return block;
+            if (block != null) {
+                if (transparent != null && transparent.length != 0) {
+                    if (Arrays.binarySearch(transparent, block.getId()) < 0) {
+                        return block;
+                    }
+                } else {
+                    return block;
+                }
             }
         } catch (Exception ignored) {
 
