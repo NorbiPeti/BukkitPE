@@ -1,6 +1,7 @@
 package net.BukkitPE.entity.passive;
 
 import net.BukkitPE.Player;
+import net.BukkitPE.entity.Entity;
 import net.BukkitPE.entity.EntityAgeable;
 import net.BukkitPE.entity.EntityCreature;
 import net.BukkitPE.entity.data.ByteEntityData;
@@ -8,10 +9,6 @@ import net.BukkitPE.level.format.FullChunk;
 import net.BukkitPE.nbt.tag.CompoundTag;
 import net.BukkitPE.network.protocol.AddEntityPacket;
 
-/**
-
- * BukkitPE Project
- */
 public abstract class EntityAnimal extends EntityCreature implements EntityAgeable {
     public EntityAnimal(FullChunk chunk, CompoundTag nbt) {
         super(chunk, nbt);
@@ -27,7 +24,7 @@ public abstract class EntityAnimal extends EntityCreature implements EntityAgeab
 
     @Override
     public boolean isBaby() {
-        return this.getDataFlag(DATA_AGEABLE_FLAGS, DATA_FLAG_BABY);
+        return this.getDataFlag(DATA_AGEABLE_FLAGS, Entity.DATA_FLAG_BABY);
     }
 
     public void spawnTo(Player player) {

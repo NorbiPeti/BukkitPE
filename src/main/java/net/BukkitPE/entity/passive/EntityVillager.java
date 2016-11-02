@@ -1,15 +1,13 @@
 package net.BukkitPE.entity.passive;
 
 import net.BukkitPE.Player;
+import net.BukkitPE.entity.Entity;
 import net.BukkitPE.entity.EntityAgeable;
 import net.BukkitPE.entity.EntityCreature;
 import net.BukkitPE.level.format.FullChunk;
 import net.BukkitPE.nbt.tag.CompoundTag;
 import net.BukkitPE.network.protocol.AddEntityPacket;
 
-/**
- * Created by Pub4Game on 21.06.2016.
- */
 public class EntityVillager extends EntityCreature implements EntityNPC, EntityAgeable {
 
     public static final int PROFESSION_FARMER = 0;
@@ -67,7 +65,7 @@ public class EntityVillager extends EntityCreature implements EntityNPC, EntityA
 
     @Override
     public boolean isBaby() {
-        return this.getDataFlag(DATA_AGEABLE_FLAGS, DATA_FLAG_BABY);
+        return this.getDataFlag(DATA_FLAGS, Entity.DATA_FLAG_BABY);
     }
 
     @Override
