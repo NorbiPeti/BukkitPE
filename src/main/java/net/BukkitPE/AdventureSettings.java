@@ -1,68 +1,160 @@
-package net.BukkitPE.network.protocol;
+package net.BukkitPE;
 
-public class AdventureSettingsPacket extends DataPacket {
-    public static final byte NETWORK_ID = ProtocolInfo.ADVENTURE_SETTINGS_PACKET;
+import net.BukkitPE.network.protocol.AdventureSettingsPacket;
 
-    public boolean worldImmutable;
-	public boolean noPvp;
-	public boolean noPvm;
-	public boolean noMvp;
+public class AdventureSettings implements Cloneable {
 
-    public boolean autoJump;
-	public boolean allowFlight;
-	public boolean noClip;
-	public boolean isFlying;
+    public static final int PERMISSION_NORMAL = 0;
+    public static final int PERMISSION_OPERATOR = 1;
+    public static final int PERMISSION_HOST = 2;
+    public static final int PERMISSION_AUTOMATION = 3;
+    public static final int PERMISSION_ADMIN = 4;
 
-    /*
-	 bit mask | flag name
-	0x00000001 world_immutable
-	0x00000002 no_pvp
-	0x00000004 no_pvm
-	0x00000008 no_mvp
-	0x00000010 ?
-	0x00000020 auto_jump
-	0x00000040 allow_fly
-	0x00000080 noclip
-	0x00000100 ?
-	0x00000200 is_flying
-	*/
+    private boolean canDestroyBlock = true;
 
-    public int flags = 0;
-    public int userPermission;
+    private boolean autoJump = true;
 
-    @Override
-    public void decode() {
-        this.flags = (int) this.getUnsignedVarInt();
-        this.userPermission = (int) this.getUnsignedVarInt();
-        this.worldImmutable = (this.flags & 1) != 0;
-        this.noPvp = (this.flags & (1 << 1)) != 0;
-        this.noPvm = (this.flags & (1 << 2)) != 0;
-        this.noMvp = (this.flags & (1 << 3)) != 0;
+    private boolean canFly = false;
 
-        this.autoJump = (this.flags & (1 << 5)) != 0;
-        this.allowFlight = (this.flags & (1 << 6)) != 0;
-        this.noClip = (this.flags & (1 << 7)) != 0;
-        this.isFlying = (this.flags & (1 << 9)) != 0;
+    private boolean flying = false;
+
+    private boolean noclip = false;
+
+    private boolean noPvp = false;
+
+    private boolean noPvm = false;
+
+    private boolean noMvp = false;
+
+    private Player player;
+
+    private AdventureSettings() {
     }
 
-    @Override
-    public void encode() {
-        reset();
-        this.flags |= this.worldImmutable ? 1 : 0;
-        this.flags |= (this.noPvp ? 1 : 0) << 1;
-        this.flags |= (this.noPvm ? 1 : 0) << 2;
-        this.flags |= (this.noMvp ? 1 : 0) << 3;
-        
-        this.flags |= (this.autoJump ? 1 : 0) << 5;
-        this.flags |= (this.allowFlight ? 1 : 0) << 6;
-        this.flags |= (this.noClip ? 1 : 0) << 7;
-        this.flags |= (this.isFlying ? 1 : 0) << 9;
-        putUnsignedVarInt(flags);
-        putUnsignedVarInt(userPermission);
+    public AdventureSettings clone(Player newPlayer) {
+        try {
+            AdventureSettings settings = (AdventureSettings) super.clone();
+            settings.player = newPlayer;
+            return settings;
+        } catch (CloneNotSupportedException e) {
+            return null;
+        }
     }
 
-    @Override
-    public byte pid() {
-        return NETWORK_ID;
+    public void setCanDestroyBlock(boolean canDestroyBlock) {
+        this.canDestroyBlock = canDestroyBlock;
+    }
+
+    public void setAutoJump(boolean autoJump) {
+        this.autoJump = autoJump;
+    }
+
+    public void setCanFly(boolean canFly) {
+        this.canFly = canFly;
+    }
+
+    public void setFlying(boolean flying) {
+        this.flying = flying;
+    }
+
+    public void setNoclip(boolean noclip) {
+        this.noclip = noclip;
+    }
+
+    public void setNoPvp(boolean noPvp) {
+        this.noPvp = noPvp;
+    }
+
+    public void setNoPvm(boolean noPvm) {
+        this.noPvm = noPvm;
+    }
+
+    public void setNoMvp(boolean noMvp) {
+        this.noMvp = noMvp;
+    }
+
+    public boolean canDestroyBlock() {
+        return canDestroyBlock;
+    }
+
+    public boolean isAutoJumpEnabled() {
+        return autoJump;
+    }
+
+    public boolean canFly() {
+        return canFly;
+    }
+
+    public boolean isFlying() {
+        return flying;
+    }
+
+    public boolean isNoclipEnabled() {
+        return noclip;
+    }
+
+    public boolean isNoPvp() {
+        return noPvp;
+    }
+
+    public boolean isNoPvm() {
+        return noPvm;
+    }
+
+    public boolean isNoMvp() {
+        return noMvp;
+    }
+
+    public void update() {
+        AdventureSettingsPacket pk = new AdventureSettingsPacket();
+        pk.flags = 0;
+        pk.worldImmutable = !canDestroyBlock;
+        pk.autoJump = autoJump;
+        pk.allowFlight = canFly;
+        pk.noClip = noclip;
+        pk.isFlying = flying;
+        pk.noPvp = noPvp;
+        pk.noPvm = noPvm;
+        pk.noMvp = noMvp;
+        pk.userPermission = (this.player.isOp() ? PERMISSION_OPERATOR : PERMISSION_NORMAL);;
+        player.dataPacket(pk);
+
+        player.resetInAirTicks();
+    }
+
+    public static class Builder {
+        private final AdventureSettings settings = new AdventureSettings();
+
+        public Builder(Player player) {
+            if (player == null) {
+                throw new IllegalArgumentException("Player can not be null.");
+            }
+
+            settings.player = player;
+        }
+
+        public Builder canFly(boolean can) {
+            settings.canFly = can;
+            return this;
+        }
+
+        public Builder noclip(boolean noclip) {
+            settings.noclip = noclip;
+            return this;
+        }
+
+        public Builder canDestroyBlock(boolean can) {
+            settings.canDestroyBlock = can;
+            return this;
+        }
+
+        public Builder autoJump(boolean autoJump) {
+            settings.autoJump = autoJump;
+            return this;
+        }
+
+        public AdventureSettings build() {
+            return this.settings;
+        }
     }
 }
