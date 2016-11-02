@@ -1,9 +1,5 @@
-package cn.nukkit.utils;
+package net.BukkitPE.utils;
 
-/**
- * author: boybook
- * Nukkit Project
- */
 public class RuleData {
 
     public String name;
