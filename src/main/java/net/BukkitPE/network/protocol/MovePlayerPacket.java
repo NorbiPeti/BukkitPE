@@ -1,8 +1,7 @@
 package net.BukkitPE.network.protocol;
 
-/**
- * Created on 15-10-14.
- */
+import net.BukkitPE.math.Vector3f;
+
 public class MovePlayerPacket extends DataPacket {
 
     public static final byte NETWORK_ID = ProtocolInfo.MOVE_PLAYER_PACKET;
@@ -23,29 +22,31 @@ public class MovePlayerPacket extends DataPacket {
 
     @Override
     public void decode() {
-        eid = getLong();
-        x = getFloat();
-        y = getFloat();
-        z = getFloat();
-        yaw = getFloat();
-        headYaw = getFloat();
-        pitch = getFloat();
+        eid = getEntityId();
+        //Vector3f v = this.getVector3f();
+        this.x = this.getFloat();
+        this.y = this.getFloat();
+        this.z = this.getFloat();
+        pitch = getLFloat();
+        yaw = getLFloat();
+        headYaw = getLFloat();
         mode = (byte) getByte();
-        onGround = getByte() > 0;
+        onGround = getBoolean();
     }
 
     @Override
     public void encode() {
         reset();
-        putLong(eid);
+        putEntityId(eid);
+        //putVector3f(x, y, z);
         putFloat(x);
         putFloat(y);
         putFloat(z);
+        putFloat(pitch);
         putFloat(yaw);
         putFloat(headYaw);
-        putFloat(pitch);
         putByte(mode);
-        putByte(onGround ? (byte) 1 : 0);
+        putBoolean(onGround);
     }
 
     @Override
