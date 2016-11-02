@@ -2,17 +2,15 @@ package net.BukkitPE.utils;
 
 import net.BukkitPE.entity.Entity;
 import net.BukkitPE.entity.data.*;
+import com.sun.javaws.exceptions.InvalidArgumentException;
 
+import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.UUID;
 
-/**
-
- * BukkitPE Project
- */
 public class Binary {
 
     //Triad: {0x00,0x00,0x01}<=>1
@@ -340,6 +338,48 @@ public class Binary {
         };
     }
 
+    //TODO: proper varlong support
+
+    public static int readVarInt(DataInputStream stream) throws InvalidArgumentException, IOException {
+        long raw = readUnsignedVarInt(stream);
+        long temp = (((raw << 31) >> 31) ^ raw) >> 1;
+        return (int) (temp ^ (raw & (1 << 31)));
+    }
+
+    public static long readUnsignedVarInt(DataInputStream stream) throws InvalidArgumentException, IOException {
+        long value = 0;
+        int i = 0;
+        byte b;
+        do {
+            if (i > 63) {
+                throw new InvalidArgumentException(new String[]{"Varint did not terminate after 10 bytes!"});
+            }
+            value |= (((b = stream.readByte()) & 0x7f) << i);
+            i += 7;
+        } while ((b & 0x80) != 0);
+        return value;
+    }
+
+    public static byte[] writeVarInt(int v) throws InvalidArgumentException, IOException {
+        return  writeUnsignedVarInt((v << 1) ^ (v >> 31));
+    }
+
+    public static byte[] writeUnsignedVarInt(long v) throws InvalidArgumentException, IOException {
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        int loops = 0;
+        do {
+            if (loops > 9) {
+                throw new InvalidArgumentException(new String[]{"Varint cannot be longer than 10 bytes!"}); //for safety reasons
+            }
+            long w = v & 0x7f;
+            if ((v >> 7) != 0) {
+                w = v | 0x80;
+            }
+            stream.write((byte) w);
+        } while (v != 0);
+        return stream.toByteArray();
+    }
+
     public static byte[] reserveBytes(byte[] bytes) {
         byte[] newBytes = new byte[bytes.length];
         for (int i = 0; i < bytes.length; i++) {
@@ -398,8 +438,9 @@ public class Binary {
     }
 
     public static byte[][] splitBytes(byte[] bytes, int chunkSize) {
-        byte[][] splits = new byte[1024][chunkSize];
+        byte[][] splits = new byte[(bytes.length + chunkSize - 1) / chunkSize][chunkSize];
         int chunks = 0;
+
         for (int i = 0; i < bytes.length; i += chunkSize) {
             if ((bytes.length - i) > chunkSize) {
                 splits[chunks] = Arrays.copyOfRange(bytes, i, i + chunkSize);
@@ -408,8 +449,6 @@ public class Binary {
             }
             chunks++;
         }
-
-        splits = Arrays.copyOf(splits, chunks);
 
         return splits;
     }
